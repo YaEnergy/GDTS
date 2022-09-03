@@ -13,7 +13,6 @@ namespace GD_Texture_Swapper
         public static string GDResourcePath = @"C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash";
         private static string TexturePackFolderPath = "TexturePacks";
 
-        private static TexturePack? SelectedTexturePack = null;
         private static ComboBox TexturePackSelection = new()
         {
             Location = new Point(10, 80),
@@ -57,6 +56,8 @@ namespace GD_Texture_Swapper
             ApplicationWindow.MaximumSize = WindowSize;
             ApplicationWindow.MinimumSize = WindowSize;
 
+            ApplicationWindow.Icon = Icon.ExtractAssociatedIcon("logo.ico");
+
             Button applyTextureButton = new Button()
             {
                 Text = "Apply Texture Pack",
@@ -94,27 +95,31 @@ namespace GD_Texture_Swapper
                     Application.Exit();
                     return;
                 }
-                
+
                 TexturePackSelection.Items.Add(texturePackName);
             }
+            TexturePackSelection.SelectedIndex = 0;
             TexturePackSelection.Update();
         }
         static void ApplyTexturePack(object? o, EventArgs s)
         {
-            MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
+            try
+            {
+                int selectedIndex = TexturePackSelection.SelectedIndex;
+                string? texturePackName = TexturePackSelection.Items[selectedIndex].ToString();
+                if (texturePackName == null) return;
+                //Texture swap
+                using (FileStream fs = new FileStream(TexturePackFolderPath + @"\" + texturePackName, FileMode.Open, FileAccess.ReadWrite))
+                {
 
-           
+                }
+                MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to apply texture pack. Reason: {ex.Message}", "Apply texture pack");
+            }
         }
     }
 
-    public class TexturePack
-    {
-        public static Dictionary<string, Image> Images = new();
-        public static string TexturePackPath = "";
-        public TexturePack(string texturePackPath, Dictionary<string, Image> images)
-        {
-            TexturePackPath = texturePackPath;
-            Images = images;
-        }
-    }
 }
