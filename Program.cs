@@ -7,7 +7,7 @@ namespace GD_Texture_Swapper
     class Program
     {
         public static Form ApplicationWindow = new Form();
-        private static Size WindowSize = new Size(900, 600);
+        private static Size WindowSize = new Size(600, 320);
 
         public static string DataPath = Application.UserAppDataPath;
         public static string GDResourcePath = @"C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash";
@@ -15,9 +15,16 @@ namespace GD_Texture_Swapper
 
         private static ComboBox TexturePackSelection = new()
         {
+            Text = "Texture Packs",
             Location = new Point(10, 80),
             Size = new Size(240, 80),
             DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        private static Button ApplyTextureButton = new Button()
+        {
+            Text = "Apply Texture Pack",
+            Location = new Point(10, 120),
+            Size = new Size(240, 40)
         };
         /// <summary>
         ///  The main entry point for the application.
@@ -58,13 +65,7 @@ namespace GD_Texture_Swapper
 
             ApplicationWindow.Icon = Icon.ExtractAssociatedIcon("logo.ico");
 
-            Button applyTextureButton = new Button()
-            {
-                Text = "Apply Texture Pack",
-                Location = new Point(10, 120),
-                Size = new Size(240, 40)
-            };
-            applyTextureButton.Click += (o, s) => ApplyTexturePack(o, s);
+            ApplyTextureButton.Click += (o, s) => ApplyTexturePack(o, s);
 
             Button updateTexturePacksButton = new Button()
             {
@@ -76,7 +77,7 @@ namespace GD_Texture_Swapper
 
             UpdateTexturePacks();
 
-            ApplicationWindow.Controls.Add(applyTextureButton);
+            ApplicationWindow.Controls.Add(ApplyTextureButton);
             ApplicationWindow.Controls.Add(updateTexturePacksButton);
             ApplicationWindow.Controls.Add(TexturePackSelection);
 
@@ -85,7 +86,7 @@ namespace GD_Texture_Swapper
         static void UpdateTexturePacks()
         {
             TexturePackSelection.Items.Clear();
-            string[] texturePackPaths = Directory.GetDirectories("TexturePacks");
+            string[] texturePackPaths = Directory.GetDirectories(TexturePackFolderPath);
             foreach (string texturePackPath in texturePackPaths)
             {
                 string texturePackName = texturePackPath.Replace(@"TexturePacks\", "");
@@ -101,24 +102,50 @@ namespace GD_Texture_Swapper
             TexturePackSelection.SelectedIndex = 0;
             TexturePackSelection.Update();
         }
+        static void OverwriteTexturePackFile(string fileName, string filePath)
+        {
+            FileStream fs = new(filePath, FileMode.Open, FileAccess.ReadWrite);
+
+            FileStream resource_fs = new(GDResourcePath + $@"\Resources\{fileName}", FileMode.Open, FileAccess.ReadWrite);
+
+            fs.CopyTo(resource_fs);
+
+            fs.Close();
+            resource_fs.Close();
+        }
         static void ApplyTexturePack(object? o, EventArgs s)
         {
+            ApplyTextureButton.Enabled = false;
+            ApplyTextureButton.Text = "Applying...";
             try
             {
                 int selectedIndex = TexturePackSelection.SelectedIndex;
                 string? texturePackName = TexturePackSelection.Items[selectedIndex].ToString();
                 if (texturePackName == null) return;
                 //Texture swap
-                using (FileStream fs = new FileStream(TexturePackFolderPath + @"\" + texturePackName, FileMode.Open, FileAccess.ReadWrite))
+                string texturePackPath = TexturePackFolderPath + @"\" + texturePackName;
+                string[] fileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + texturePackName);
+                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\Default");
+                for (int i = 0; i < defaultFileNames.Length; i++)
                 {
+                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\Default", "");
 
+                    if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}")) 
+                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\Default\{defaultFileName}"); //Use default texture
+                    else 
+                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"); //Use found texture
+
+                    //MessageBox.Show(defaultFileName, "Apply texture pack");
                 }
+
                 MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to apply texture pack. Reason: {ex.Message}", "Apply texture pack");
             }
+            ApplyTextureButton.Enabled = true;
+            ApplyTextureButton.Text = "Apply Texture Pack";
         }
     }
 
