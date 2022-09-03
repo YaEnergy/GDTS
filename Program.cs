@@ -47,7 +47,7 @@ namespace GD_Texture_Swapper
 
             if (!Directory.Exists(TexturePackFolderPath))
             {
-                Directory.CreateDirectory(TexturePackFolderPath).CreateSubdirectory("Default");
+                Directory.CreateDirectory(TexturePackFolderPath).CreateSubdirectory("Default (2.11)");
             }
 
             if (!Directory.Exists(GDResourcePath))
@@ -125,13 +125,13 @@ namespace GD_Texture_Swapper
                 //Texture swap
                 string texturePackPath = TexturePackFolderPath + @"\" + texturePackName;
                 string[] fileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + texturePackName);
-                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\Default");
+                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\Default (2.11)");
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
-                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\Default", "");
+                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\Default (2.11)", "");
 
                     if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}")) 
-                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\Default\{defaultFileName}"); //Use default texture
+                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\Default (2.11)\{defaultFileName}"); //Use default texture
                     else 
                         OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"); //Use found texture
 
