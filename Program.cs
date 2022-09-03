@@ -127,6 +127,7 @@ namespace GD_Texture_Swapper
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
                     string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\Default (2.11)", "");
+                    if (defaultFileName.Contains(".dat")) continue;
 
                     if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}")) 
                         OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\Default (2.11)\{defaultFileName}"); //Use default texture
