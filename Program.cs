@@ -39,16 +39,14 @@ namespace GD_Texture_Swapper
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             // DataPath = Application.UserAppDataPath;
-            if (!File.Exists("GDResourceFolderPath.txt"))
-            {
-                using (StreamWriter sw = File.CreateText("GDResourceFolderPath.txt")) await sw.WriteAsync(GDResourcePath);
-            }
+            if (!File.Exists("GDResourceFolderPath.txt")) 
+                using (StreamWriter sw = File.CreateText("GDResourceFolderPath.txt")) 
+                    await sw.WriteAsync(GDResourcePath);
+
             GDResourcePath = File.ReadAllText("GDResourceFolderPath.txt");
 
-            if (!Directory.Exists(TexturePackFolderPath))
-            {
+            if (!Directory.Exists(TexturePackFolderPath)) 
                 Directory.CreateDirectory(TexturePackFolderPath).CreateSubdirectory("Default (2.11)");
-            }
 
             if (!Directory.Exists(GDResourcePath))
             {
@@ -134,8 +132,6 @@ namespace GD_Texture_Swapper
                         OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\Default (2.11)\{defaultFileName}"); //Use default texture
                     else 
                         OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"); //Use found texture
-
-                    //MessageBox.Show(defaultFileName, "Apply texture pack");
                 }
 
                 MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
