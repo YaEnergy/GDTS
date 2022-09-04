@@ -65,6 +65,13 @@ namespace GD_Texture_Swapper
 
             ApplyTextureButton.Click += (o, s) => ApplyTexturePack(o, s);
 
+            Label texturePacksLabel = new Label()
+            {
+                Text = "Texture Packs",
+                Location = new Point(10, 55),
+                Size = new Size(240, 25)
+            };
+
             Button updateTexturePacksButton = new Button()
             {
                 Text = "Update Texture Packs",
@@ -76,7 +83,7 @@ namespace GD_Texture_Swapper
             UpdateTexturePacks();
 
             ApplicationWindow.Controls.Add(ApplyTextureButton);
-            ApplicationWindow.Controls.Add(texturePacksText);
+            ApplicationWindow.Controls.Add(texturePacksLabel);
             ApplicationWindow.Controls.Add(updateTexturePacksButton);
             ApplicationWindow.Controls.Add(TexturePackSelection);
 
