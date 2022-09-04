@@ -76,6 +76,7 @@ namespace GD_Texture_Swapper
             UpdateTexturePacks();
 
             ApplicationWindow.Controls.Add(ApplyTextureButton);
+            ApplicationWindow.Controls.Add(texturePacksText);
             ApplicationWindow.Controls.Add(updateTexturePacksButton);
             ApplicationWindow.Controls.Add(TexturePackSelection);
 
@@ -88,13 +89,6 @@ namespace GD_Texture_Swapper
             foreach (string texturePackPath in texturePackPaths)
             {
                 string texturePackName = texturePackPath.Replace(@"TexturePacks\", "");
-                if (TexturePackSelection.Items.Contains(texturePackName))
-                {
-                    DialogResult result = MessageBox.Show($"Texture Pack: {texturePackName} already exists!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Application.Exit();
-                    return;
-                }
-
                 TexturePackSelection.Items.Add(texturePackName);
             }
             TexturePackSelection.SelectedIndex = 0;
@@ -113,8 +107,9 @@ namespace GD_Texture_Swapper
         }
         static void ApplyTexturePack(object? o, EventArgs s)
         {
-            ApplyTextureButton.Enabled = false;
             ApplyTextureButton.Text = "Applying...";
+            ApplyTextureButton.Enabled = false;
+            ApplyTextureButton.Update();
             try
             {
                 int selectedIndex = TexturePackSelection.SelectedIndex;
@@ -143,6 +138,7 @@ namespace GD_Texture_Swapper
             }
             ApplyTextureButton.Enabled = true;
             ApplyTextureButton.Text = "Apply Texture Pack";
+            ApplyTextureButton.Update();
         }
     }
 
