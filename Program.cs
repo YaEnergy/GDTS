@@ -12,6 +12,7 @@ namespace GD_Texture_Swapper
         public static string DataPath = Application.UserAppDataPath;
         public static string GDResourcePath = @"C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash";
         private static string TexturePackFolderPath = "TexturePacks";
+        private static string DefaultTexturePackName = "Default (2.11)";
 
         private static ComboBox TexturePackSelection = new()
         {
@@ -46,7 +47,7 @@ namespace GD_Texture_Swapper
             GDResourcePath = File.ReadAllText("GDResourceFolderPath.txt");
 
             if (!Directory.Exists(TexturePackFolderPath)) 
-                Directory.CreateDirectory(TexturePackFolderPath).CreateSubdirectory("Default (2.11)");
+                Directory.CreateDirectory(TexturePackFolderPath).CreateSubdirectory(DefaultTexturePackName);
 
             if (!Directory.Exists(GDResourcePath))
             {
@@ -55,7 +56,7 @@ namespace GD_Texture_Swapper
                 return;
             }
 
-            ApplicationWindow.Text = "Geometry Dash Texture Swapper (vAlpha)";
+            ApplicationWindow.Text = "Geometry Dash Texture Swapper (v1.0)";
             ApplicationWindow.MaximizeBox = false;
             ApplicationWindow.Size = WindowSize;
             ApplicationWindow.MaximumSize = WindowSize;
@@ -74,7 +75,7 @@ namespace GD_Texture_Swapper
 
             Button updateTexturePacksButton = new Button()
             {
-                Text = "Update Texture Packs",
+                Text = "Refresh Texture Packs",
                 Location = new Point(10, 160),
                 Size = new Size(240, 40)
             };
@@ -125,14 +126,14 @@ namespace GD_Texture_Swapper
                 //Texture swap
                 string texturePackPath = TexturePackFolderPath + @"\" + texturePackName;
                 string[] fileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + texturePackName);
-                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\Default (2.11)");
+                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
-                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\Default (2.11)", "");
+                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + DefaultTexturePackName, "");
                     if (defaultFileName.Contains(".dat")) continue;
 
                     if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}")) 
-                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\Default (2.11)\{defaultFileName}"); //Use default texture
+                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{DefaultTexturePackName}\{defaultFileName}"); //Use default texture
                     else 
                         OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"); //Use found texture
                 }
