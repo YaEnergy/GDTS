@@ -189,15 +189,15 @@ namespace GD_Texture_Swapper
                 MessageBox.Show(ex.Message);
             }
         }
-        static Task ApplyTexturePack(object? o, EventArgs s)
+        static void ApplyTexturePack(object? o, EventArgs s)
         {
             ApplyTextureButton.Text = "Applying...";
             ApplyTextureButton.Enabled = false;
             ApplyTextureButton.Update();
             try
             {
-                string texturePackName = TexturePackSelection.SelectedText;
-                if (texturePackName == null) return Task.CompletedTask;
+                string? texturePackName = TexturePackSelection.SelectedItem.ToString();
+                if (texturePackName == null) return;
                 //Texture swap
                 string texturePackPath = TexturePackFolderPath + @"\" + texturePackName;
                 string[] fileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + texturePackName);
@@ -205,7 +205,7 @@ namespace GD_Texture_Swapper
 
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
-                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + FallbackTexturePackName, "");
+                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + FallbackTexturePackName + @"\", "");
                     if (defaultFileName.Contains(".dat")) continue;
 
                     ApplyTextureButton.Text = $"Applying... ({i + 1}/{defaultFileNames.Length})";
@@ -227,7 +227,7 @@ namespace GD_Texture_Swapper
             ApplyTextureButton.Text = "Apply Texture Pack";
             ApplyTextureButton.Update();
 
-            return Task.CompletedTask;
+            return;
         }
     }
 
