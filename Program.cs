@@ -7,12 +7,14 @@ namespace GD_Texture_Swapper
     class Program
     {
         public static Form ApplicationWindow = new Form();
-        private static Size WindowSize = new Size(600, 320);
+        private static Size MainWindowSize = new Size(600, 320);
 
         public static string DataPath = Application.UserAppDataPath;
         public static string GDResourcePath = @"C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash";
         private static string TexturePackFolderPath = "TexturePacks";
+
         private static string DefaultTexturePackName = "Default (2.11)";
+        private static string FallbackTexturePackName = "Default (2.11)";
 
         private static ComboBox TexturePackSelection = new()
         {
@@ -27,6 +29,16 @@ namespace GD_Texture_Swapper
             Location = new Point(10, 120),
             Size = new Size(240, 40)
         };
+
+        //Settings
+        private static ComboBox FallbackTPSelection = new()
+        {
+            SelectedText = DefaultTexturePackName,
+            Location = new Point(280, 105),
+            Size = new Size(240, 80),
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -51,20 +63,21 @@ namespace GD_Texture_Swapper
 
             if (!Directory.Exists(GDResourcePath))
             {
-                DialogResult result = MessageBox.Show($"Couldn't find the GD Resources folder with the path given in GDResourceFolderPath.txt. Path given: {GDResourcePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DialogResult result = MessageBox.Show($"Couldn't find the GD folder with the path given in GDResourceFolderPath.txt. Path given: {GDResourcePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Application.Exit();
                 return;
             }
 
-            ApplicationWindow.Text = "Geometry Dash Texture Swapper (v1.0)";
+            ApplicationWindow.Text = "Geometry Dash Texture Swapper (v2)";
             ApplicationWindow.MaximizeBox = false;
-            ApplicationWindow.Size = WindowSize;
-            ApplicationWindow.MaximumSize = WindowSize;
-            ApplicationWindow.MinimumSize = WindowSize;
+            ApplicationWindow.Size = MainWindowSize;
+            ApplicationWindow.MaximumSize = MainWindowSize;
+            ApplicationWindow.MinimumSize = MainWindowSize;
 
             ApplicationWindow.Icon = Icon.ExtractAssociatedIcon("logo.ico");
 
             ApplyTextureButton.Click += (o, s) => ApplyTexturePack(o, s);
+            FallbackTPSelection.SelectionChangeCommitted += (o, s) => SetFallbackTexturePack();
 
             Label texturePacksLabel = new Label()
             {
@@ -81,6 +94,20 @@ namespace GD_Texture_Swapper
             };
             updateTexturePacksButton.Click += (o, s) => UpdateTexturePacks();
 
+            Label settingsLabel = new Label()
+            {
+                Text = "Settings",
+                Location = new Point(280, 55),
+                Size = new Size(240, 25)
+            };
+
+            Label fallbacktexturepackLabel = new Label()
+            {
+                Text = "Fallback Texture Pack",
+                Location = new Point(280, 80),
+                Size = new Size(240, 25)
+            };
+
             UpdateTexturePacks();
 
             ApplicationWindow.Controls.Add(ApplyTextureButton);
@@ -88,30 +115,79 @@ namespace GD_Texture_Swapper
             ApplicationWindow.Controls.Add(updateTexturePacksButton);
             ApplicationWindow.Controls.Add(TexturePackSelection);
 
+            ApplicationWindow.Controls.Add(settingsLabel);
+            ApplicationWindow.Controls.Add(fallbacktexturepackLabel);
+            ApplicationWindow.Controls.Add(FallbackTPSelection);
+
             Application.Run(ApplicationWindow);
+        }
+
+        static void SetFallbackTexturePack()
+        {
+            string? newFallbackTPname = FallbackTPSelection.SelectedItem.ToString();
+            if (newFallbackTPname == null) return;
+
+            string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
+            FallbackTexturePackName = newFallbackTPname;
+            try
+            {
+                foreach (string defaultFilePath in defaultFileNames)
+                {
+                    string defaultFileName = defaultFilePath.Replace($@"{TexturePackFolderPath}\{DefaultTexturePackName}\", "");
+
+                    if (!File.Exists($@"{TexturePackFolderPath}\{FallbackTexturePackName}\{defaultFileName}"))
+                        throw new Exception($@"File not found! : {TexturePackFolderPath}\{FallbackTexturePackName}\{defaultFileName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                FallbackTexturePackName = DefaultTexturePackName;
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            FallbackTPSelection.SelectedItem = FallbackTexturePackName;
+            FallbackTPSelection.Update();
+
+            MessageBox.Show($"Set Fallback Texture Pack to {FallbackTexturePackName}", "Set Fallback Texture Pack");
         }
         static void UpdateTexturePacks()
         {
             TexturePackSelection.Items.Clear();
+            FallbackTPSelection.Items.Clear();
             string[] texturePackPaths = Directory.GetDirectories(TexturePackFolderPath);
             foreach (string texturePackPath in texturePackPaths)
             {
                 string texturePackName = texturePackPath.Replace(@"TexturePacks\", "");
                 TexturePackSelection.Items.Add(texturePackName);
+                FallbackTPSelection.Items.Add(texturePackName);
             }
-            TexturePackSelection.SelectedIndex = 0;
+
+            TexturePackSelection.SelectedItem = DefaultTexturePackName;
             TexturePackSelection.Update();
+
+            FallbackTPSelection.SelectedItem = FallbackTexturePackName;
+            if (FallbackTexturePackName != "Default (2.11)") 
+                SetFallbackTexturePack();
+
+            FallbackTPSelection.Update();
         }
         static void OverwriteTexturePackFile(string fileName, string filePath)
         {
-            FileStream fs = new(filePath, FileMode.Open, FileAccess.ReadWrite);
+            try
+            {
+                FileStream fs = new(filePath, FileMode.Open, FileAccess.ReadWrite);
 
-            FileStream resource_fs = new(GDResourcePath + $@"\Resources\{fileName}", FileMode.Open, FileAccess.ReadWrite);
+                FileStream resource_fs = new(GDResourcePath + $@"\Resources\{fileName}", FileMode.Open, FileAccess.ReadWrite);
 
-            fs.CopyTo(resource_fs);
+                fs.CopyTo(resource_fs);
 
-            fs.Close();
-            resource_fs.Close();
+                fs.Close();
+                resource_fs.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
         static void ApplyTexturePack(object? o, EventArgs s)
         {
@@ -120,20 +196,19 @@ namespace GD_Texture_Swapper
             ApplyTextureButton.Update();
             try
             {
-                int selectedIndex = TexturePackSelection.SelectedIndex;
-                string? texturePackName = TexturePackSelection.Items[selectedIndex].ToString();
+                string texturePackName = TexturePackSelection.SelectedText;
                 if (texturePackName == null) return;
                 //Texture swap
                 string texturePackPath = TexturePackFolderPath + @"\" + texturePackName;
                 string[] fileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + texturePackName);
-                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
+                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + FallbackTexturePackName);
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
-                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + DefaultTexturePackName, "");
+                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + FallbackTexturePackName, "");
                     if (defaultFileName.Contains(".dat")) continue;
 
                     if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}")) 
-                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{DefaultTexturePackName}\{defaultFileName}"); //Use default texture
+                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{FallbackTexturePackName}\{defaultFileName}"); //Use default texture
                     else 
                         OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"); //Use found texture
                 }
