@@ -226,6 +226,9 @@ namespace GD_Texture_Swapper
             {
                 MessageBox.Show($"Failed to apply texture pack. Reason: {ex.Message}", "Apply texture pack");
             }
+            ApplyTextureButton.Text = "Apply Texture Pack";
+            ApplyTextureButton.Enabled = true;
+            ApplyTextureButton.Update();
             return;
         }
     }
