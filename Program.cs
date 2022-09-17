@@ -15,31 +15,35 @@ namespace GD_Texture_Swapper
         private static string TexturePackFolderPath = "TexturePacks";
 
         private static string DefaultTexturePackName = "Default (2.11)";
-        private static string FallbackTexturePackName = "Default (2.11)";
+
+        private Point mousePointPos = Point.Empty;
             
-        private static ComboBox TexturePackSelection = new()
+        private static ListBox TexturePackSelectionList = new()
         {
             Text = "Texture Packs",
-            Location = new Point(10, 80),
-            Size = new Size(240, 80),
-            DropDownStyle = ComboBoxStyle.DropDownList
+            Location = new Point(25, 55),
+            Size = new Size(240, 120),
+        };
+        private static ListBox TexturePackSelectedList = new()
+        {
+            Text = "Texture Packs",
+            Location = new Point(300, 55),
+            Size = new Size(240, 120),
+            AllowDrop = true
         };
         private static Button ApplyTextureButton = new Button()
         {
             Text = "Apply Texture Pack",
-            Location = new Point(10, 120),
+            Location = new Point(25, 165),
             Size = new Size(240, 40)
         };
-
-        //Settings
-        private static ComboBox FallbackTPSelection = new()
+        private static Label ApplyTextureLabel = new()
         {
-            SelectedText = DefaultTexturePackName,
-            Location = new Point(280, 105),
-            Size = new Size(240, 80),
-            DropDownStyle = ComboBoxStyle.DropDownList
+            Text = "",
+            Location = new Point(280, 165),
+            Size = new Size(240, 40),
+            TextAlign = ContentAlignment.MiddleLeft
         };
-
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -69,7 +73,7 @@ namespace GD_Texture_Swapper
                 return;
             }
 
-            ApplicationWindow.Text = "Geometry Dash Texture Swapper (v2)";
+            ApplicationWindow.Text = "Geometry Dash Texture Swapper (v3)";
             ApplicationWindow.MaximizeBox = false;
             ApplicationWindow.Size = MainWindowSize;
             ApplicationWindow.MaximumSize = MainWindowSize;
@@ -79,99 +83,125 @@ namespace GD_Texture_Swapper
 
             ApplyTextureButton.Click += (o, s) => ApplyTexturePack();
 
-            FallbackTPSelection.SelectionChangeCommitted += (o, s) => SetFallbackTexturePack();
-
-            Label texturePacksLabel = new Label()
+            Label TPLabel = new Label()
             {
-                Text = "Texture Packs",
-                Location = new Point(10, 55),
+                Text = "Available Texture Packs",
+                Location = new Point(25, 30),
+                Size = new Size(240, 25)
+            };
+
+            Label selectedTPsLabel = new Label()
+            {
+                Text = "Selected Texture Packs",
+                Location = new Point(300, 30),
                 Size = new Size(240, 25)
             };
 
             Button updateTexturePacksButton = new Button()
             {
                 Text = "Refresh Texture Packs",
-                Location = new Point(10, 160),
+                Location = new Point(25, 210),
                 Size = new Size(240, 40)
             };
             updateTexturePacksButton.Click += (o, s) => UpdateTexturePacks();
 
-            Label settingsLabel = new Label()
-            {
-                Text = "Settings",
-                Location = new Point(280, 55),
-                Size = new Size(240, 25)
-            };
-
-            Label fallbacktexturepackLabel = new Label()
-            {
-                Text = "Fallback Texture Pack",
-                Location = new Point(280, 80),
-                Size = new Size(240, 25)
-            };
-
             UpdateTexturePacks();
 
-            ApplicationWindow.Controls.Add(ApplyTextureButton);
-            ApplicationWindow.Controls.Add(texturePacksLabel);
-            ApplicationWindow.Controls.Add(updateTexturePacksButton);
-            ApplicationWindow.Controls.Add(TexturePackSelection);
+            TexturePackSelectionList.MouseDown += (o, s) => ListBoxDragStart(o, s);
+            TexturePackSelectionList.MouseMove += (o, s) => ListBoxDragUpdate(o, s);
 
-            ApplicationWindow.Controls.Add(settingsLabel);
-            ApplicationWindow.Controls.Add(fallbacktexturepackLabel);
-            ApplicationWindow.Controls.Add(FallbackTPSelection);
+            TexturePackSelectedList.DragOver += (o, s) => ListBoxDragOver(o, s);
+            TexturePackSelectedList.DragDrop += (o, s) => AddTexturePack(o, s);
+            TexturePackSelectedList.MouseDoubleClick += (o, s) => RemoveTexturePack(o, s);
+
+            ApplicationWindow.Controls.Add(ApplyTextureButton);
+            ApplicationWindow.Controls.Add(TPLabel);
+            ApplicationWindow.Controls.Add(selectedTPsLabel);
+            ApplicationWindow.Controls.Add(updateTexturePacksButton);
+            ApplicationWindow.Controls.Add(TexturePackSelectionList);
+            ApplicationWindow.Controls.Add(TexturePackSelectedList);
 
             Application.Run(ApplicationWindow);
         }
 
-        static void SetFallbackTexturePack()
+        private void ListBoxDragStart(object? sender, MouseEventArgs s)
         {
-            string? newFallbackTPname = FallbackTPSelection.SelectedItem.ToString();
-            if (newFallbackTPname == null) return;
+            ListBox? listbox = sender as ListBox;
+            if (listbox == null)
+                return;
 
-            string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
-            FallbackTexturePackName = newFallbackTPname;
-            try
-            {
-                foreach (string defaultFilePath in defaultFileNames)
-                {
-                    string defaultFileName = defaultFilePath.Replace($@"{TexturePackFolderPath}\{DefaultTexturePackName}\", "");
+            if (s.Button != MouseButtons.Left)
+                return;
 
-                    if (!File.Exists($@"{TexturePackFolderPath}\{FallbackTexturePackName}\{defaultFileName}"))
-                        throw new Exception($@"File not found! : {TexturePackFolderPath}\{FallbackTexturePackName}\{defaultFileName}");
-                }
-            }
-            catch (Exception ex)
-            {
-                FallbackTexturePackName = DefaultTexturePackName;
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            mousePointPos = s.Location;
+            int selectedIndex = listbox.IndexFromPoint(mousePointPos);
+            if (selectedIndex == -1)
+                mousePointPos = Point.Empty;
+        }
+        private void ListBoxDragUpdate(object? sender, MouseEventArgs s)
+        {
+            ListBox? listbox = sender as ListBox;
+            if (listbox == null)
+                return;
 
-            FallbackTPSelection.SelectedItem = FallbackTexturePackName;
-            FallbackTPSelection.Update();
+            if (s.Button == MouseButtons.Left)
+                if ((mousePointPos != Point.Empty) && ((Math.Abs(s.X - mousePointPos.X) > SystemInformation.DragSize.Width) || (Math.Abs(s.Y - mousePointPos.Y) > SystemInformation.DragSize.Height)))
+                    listbox.DoDragDrop(sender, DragDropEffects.Move);
+        }
+        private void ListBoxDragOver(object? sender, DragEventArgs s)
+        {
+            s.Effect = DragDropEffects.Move;
+        }
 
-            MessageBox.Show($"Set Fallback Texture Pack to {FallbackTexturePackName}", "Set Fallback Texture Pack");
+        private void AddTexturePack(object? sender, DragEventArgs s)
+        {
+            ListBox? listBox = sender as ListBox;
+            if (listBox == null)
+                return;
+
+            Point newPoint = new Point(s.X, s.Y);
+            newPoint = listBox.PointToClient(newPoint);
+            int selectedIndex = listBox.IndexFromPoint(newPoint);
+            object item = TexturePackSelectionList.Items[TexturePackSelectionList.IndexFromPoint(mousePointPos)];
+            if (selectedIndex == -1)
+                listBox.Items.Add(item);
+            else
+                listBox.Items.Insert(selectedIndex, item);
+        }
+        private void RemoveTexturePack(object? sender, MouseEventArgs s)
+        {
+            ListBox? listBox = sender as ListBox;
+            if (listBox == null)
+                return;
+
+            if (s.Button != MouseButtons.Left)
+                return;
+
+            Point newPoint = new Point(s.X, s.Y);
+            //newPoint = listBox.PointToClient(newPoint);
+            int selectedIndex = listBox.IndexFromPoint(newPoint);
+            string? item = listBox.Items[selectedIndex].ToString();
+            if (item == null || item == DefaultTexturePackName)
+                return;
+
+            if (selectedIndex != -1)
+                listBox.Items.RemoveAt(selectedIndex);
         }
         static void UpdateTexturePacks()
         {
-            TexturePackSelection.Items.Clear();
-            FallbackTPSelection.Items.Clear();
+            TexturePackSelectionList.Items.Clear();
+            TexturePackSelectedList.Items.Clear();
+
             string[] texturePackPaths = Directory.GetDirectories(TexturePackFolderPath);
             foreach (string texturePackPath in texturePackPaths)
             {
                 string texturePackName = texturePackPath.Replace(@"TexturePacks\", "");
-                TexturePackSelection.Items.Add(texturePackName);
-                FallbackTPSelection.Items.Add(texturePackName);
+
+                if (texturePackName != DefaultTexturePackName)
+                    TexturePackSelectionList.Items.Add(texturePackName);
             }
 
-            TexturePackSelection.SelectedItem = DefaultTexturePackName;
-            TexturePackSelection.Update();
-
-            FallbackTPSelection.SelectedItem = FallbackTexturePackName;
-            if (FallbackTexturePackName != "Default (2.11)") 
-                SetFallbackTexturePack();
-
-            FallbackTPSelection.Update();
+            TexturePackSelectedList.Items.Add(DefaultTexturePackName);
         }
         static void OverwriteTexturePackFile(string fileName, string filePath)
         {
@@ -194,30 +224,47 @@ namespace GD_Texture_Swapper
 
         static void ApplyTexturePack()
         {
+            ApplicationWindow.Controls.Add(ApplyTextureLabel);
             ApplyTextureButton.Text = "Applying...";
             ApplyTextureButton.Enabled = false;
             ApplyTextureButton.Update();
             try
             {
-                string? texturePackName = TexturePackSelection.SelectedItem.ToString();
-                if (texturePackName == null) return;
+                List<string> selectedTexturePacks = new();
+                for (int i = 0; i < TexturePackSelectedList.Items.Count; i++)
+                {
+                    string? texturePackName = TexturePackSelectedList.Items[i].ToString();
+                    if(texturePackName != null)
+                        selectedTexturePacks.Add(texturePackName);
+                }
+
                 //Texture swap
-                string texturePackPath = TexturePackFolderPath + @"\" + texturePackName;
-                string[] fileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + texturePackName);
-                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + FallbackTexturePackName);
+                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
 
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
-                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + FallbackTexturePackName + @"\", "");
-                    if (defaultFileName.Contains(".dat")) continue;
+                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + DefaultTexturePackName + @"\", "");
+                    if (defaultFileName.Contains(".dat")) 
+                        continue;
 
-                    ApplyTextureButton.Text = $"Applying {defaultFileName} ({i + 1}/{defaultFileNames.Length})";
+                    ApplyTextureButton.Text = $"Applying ({i + 1}/{defaultFileNames.Length})";
                     ApplyTextureButton.Update();
+                    ApplyTextureLabel.Text = defaultFileName;
+                    ApplyTextureLabel.Update();
 
-                    if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"))
-                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{FallbackTexturePackName}\{defaultFileName}"); //Use default texture
-                    else
-                        OverwriteTexturePackFile(defaultFileName, TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"); //Use found texture
+                    string firstFoundTexturePath = "";
+                    for (int j = 0; j < selectedTexturePacks.Count; j++)
+                    {
+                        int index = selectedTexturePacks.Count - 1 - j;
+                        string texturePackName = selectedTexturePacks[index];
+                        if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"))
+                            continue;
+
+                        firstFoundTexturePath = TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}";
+                        break;
+                    }
+
+                    OverwriteTexturePackFile(defaultFileName, firstFoundTexturePath);
                 }
 
                 MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
@@ -229,6 +276,7 @@ namespace GD_Texture_Swapper
             ApplyTextureButton.Text = "Apply Texture Pack";
             ApplyTextureButton.Enabled = true;
             ApplyTextureButton.Update();
+            ApplicationWindow.Controls.Remove(ApplyTextureLabel);
             return;
         }
     }
