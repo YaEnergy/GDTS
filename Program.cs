@@ -14,7 +14,7 @@ namespace GD_Texture_Swapper
         public static string GDResourcePath = @"C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash";
         private static string TexturePackFolderPath = "TexturePacks";
 
-        private static string DefaultTexturePackName = "Default (2.11)";
+        private static string DefaultTexturePackName = "Default";
 
         private Point mousePointPos = Point.Empty;
             
@@ -63,8 +63,8 @@ namespace GD_Texture_Swapper
 
             GDResourcePath = File.ReadAllText("GDResourceFolderPath.txt");
 
-            if (!Directory.Exists(TexturePackFolderPath)) 
-                Directory.CreateDirectory(TexturePackFolderPath).CreateSubdirectory(DefaultTexturePackName);
+            if (!Directory.Exists(TexturePackFolderPath))
+                Directory.CreateDirectory(TexturePackFolderPath);
 
             if (!Directory.Exists(GDResourcePath))
             {
@@ -72,6 +72,11 @@ namespace GD_Texture_Swapper
                 Application.Exit();
                 return;
             }
+
+            if (!Directory.Exists(TexturePackFolderPath + @"\" + DefaultTexturePackName))
+                if (!ResetDefaultTexturePack())
+                    return;
+
 
             ApplicationWindow.Text = "Geometry Dash Texture Swapper (v3)";
             ApplicationWindow.MaximizeBox = false;
@@ -105,6 +110,18 @@ namespace GD_Texture_Swapper
             };
             updateTexturePacksButton.Click += (o, s) => UpdateTexturePacks();
 
+            Button resetDefaultTexturePackButton = new Button()
+            {
+                Text = "RESET DEFAULT TEXTURE PACK",
+                Location = new Point(300, 210),
+                Size = new Size(240, 40)
+            };
+            resetDefaultTexturePackButton.Click += (o, s) =>
+            {
+                if (!ResetDefaultTexturePack())
+                    return;
+            };
+
             UpdateTexturePacks();
 
             TexturePackSelectionList.MouseDown += (o, s) => ListBoxDragStart(o, s);
@@ -118,6 +135,7 @@ namespace GD_Texture_Swapper
             ApplicationWindow.Controls.Add(TPLabel);
             ApplicationWindow.Controls.Add(selectedTPsLabel);
             ApplicationWindow.Controls.Add(updateTexturePacksButton);
+            ApplicationWindow.Controls.Add(resetDefaultTexturePackButton);
             ApplicationWindow.Controls.Add(TexturePackSelectionList);
             ApplicationWindow.Controls.Add(TexturePackSelectedList);
 
@@ -148,11 +166,59 @@ namespace GD_Texture_Swapper
                 if ((mousePointPos != Point.Empty) && ((Math.Abs(s.X - mousePointPos.X) > SystemInformation.DragSize.Width) || (Math.Abs(s.Y - mousePointPos.Y) > SystemInformation.DragSize.Height)))
                     listbox.DoDragDrop(sender, DragDropEffects.Move);
         }
-        private void ListBoxDragOver(object? sender, DragEventArgs s)
-        {
-            s.Effect = DragDropEffects.Move;
-        }
+        private void ListBoxDragOver(object? sender, DragEventArgs s) 
+            => s.Effect = DragDropEffects.Move;
 
+        static bool ResetDefaultTexturePack()
+        {
+            string tpPath = TexturePackFolderPath + @"\" + DefaultTexturePackName;
+
+            if (!Directory.Exists(tpPath))
+            {
+                DialogResult result = MessageBox.Show("Because no Default Texture Pack exists yet, we'll be creating one. If you have any texture packs already on, you might want to click cancel and set ur GD resource files to default textures!", "Create Default Texture Pack", MessageBoxButtons.OKCancel);
+                if (result == DialogResult.Cancel || result == DialogResult.None)
+                    return false;
+
+                Directory.CreateDirectory(tpPath);
+            }
+            else
+            {
+                DialogResult result = MessageBox.Show("Are you sure you want to reset the default texture pack? If you have any texture packs already on, you might want to click cancel and set ur GD resource files to default textures!", "Default Texture Pack", MessageBoxButtons.OKCancel);
+                if (result == DialogResult.Cancel || result == DialogResult.None)
+                    return true;
+            }
+
+            string[] filePaths = Directory.GetFiles(GDResourcePath + $@"\Resources");
+
+            try
+            {
+                foreach (string filePath in filePaths)
+                {
+                    string file = Path.GetFileName(filePath);
+
+                    if (file.Contains(".dat"))
+                        continue;
+
+                    FileStream fs = File.Create(tpPath + $@"\{file}");
+
+                    FileStream resource_fs = new(GDResourcePath + $@"\Resources\{file}", FileMode.Open, FileAccess.ReadWrite);
+
+                    resource_fs.CopyTo(fs);
+
+                    fs.Close();
+                    resource_fs.Close();
+                }
+
+                MessageBox.Show("Successfully resetted the Default Texture Pack! If you had any texture packs already on, you might wanna check the Default texture pack files and overwrite them with the actual default geometry dash resource files.", "Default Texture Pack");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Resetting default texture pack failed. Reason: " + ex.Message);
+                Application.Exit();
+                return false;
+            }
+            return true;
+        }
         private void AddTexturePack(object? sender, DragEventArgs s)
         {
             ListBox? listBox = sender as ListBox;
@@ -243,7 +309,7 @@ namespace GD_Texture_Swapper
 
                 for (int i = 0; i < defaultFileNames.Length; i++)
                 {
-                    string defaultFileName = defaultFileNames[i].Replace(TexturePackFolderPath + @"\" + DefaultTexturePackName + @"\", "");
+                    string defaultFileName = Path.GetFileName(defaultFileNames[i]);
                     if (defaultFileName.Contains(".dat")) 
                         continue;
 
