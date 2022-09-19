@@ -9,4 +9,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="TexturePacks\" />
+	<Folder Include="Assets\" />
+  </ItemGroup>
+
 </Project>
