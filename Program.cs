@@ -169,36 +169,11 @@ namespace GD_Texture_Swapper
         private void ListBoxDragOver(object? sender, DragEventArgs s) 
             => s.Effect = DragDropEffects.Move;
 
-        static long GetDirectorySize(DirectoryInfo d)
-        {
-            long size = 0;
-            FileInfo[] files = d.GetFiles();
-            foreach (FileInfo file in files)
-                size += file.Length;
-
-            DirectoryInfo[] ds = d.GetDirectories();
-            foreach(DirectoryInfo dir in ds)
-                size += GetDirectorySize(dir);
-
-            return size;
-        }
-        static bool HasEnoughAvailableSpace(string? driveLetter, long spaceRequired)
-        {
-            if (driveLetter == null)
-                return false;
-
-            DriveInfo[] driveInfo = DriveInfo.GetDrives();
-            foreach (DriveInfo drive in driveInfo)
-                if (driveInfo[0].Name == driveLetter)
-                    return drive.AvailableFreeSpace > spaceRequired;
-
-            return false;
-        }
         static bool ResetDefaultTexturePack()
         {
             DirectoryInfo resourceFolder = new DirectoryInfo(GDResourcePath + $@"\Resources");
-            long spaceReq = GetDirectorySize(resourceFolder);
-            bool hasSpace = HasEnoughAvailableSpace(Path.GetPathRoot(Environment.CurrentDirectory), spaceReq);
+            long spaceReq = TPFileManager.GetDirectorySize(resourceFolder);
+            bool hasSpace = TPFileManager.HasEnoughAvailableSpace(Path.GetPathRoot(Environment.CurrentDirectory), spaceReq);
 
             int spaceReqMB = (int)spaceReq / 1024 / 1024;
 
@@ -367,7 +342,9 @@ namespace GD_Texture_Swapper
                         break;
                     }
 
-                    OverwriteTexturePackFile(defaultFileName, firstFoundTexturePath);
+                    Exception? ex = TPFileManager.OverwriteFile(GDResourcePath + $@"\Resources\{defaultFileName}", firstFoundTexturePath);
+                    if (ex != null)
+                        MessageBox.Show(ex.Message);
                 }
 
                 MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
