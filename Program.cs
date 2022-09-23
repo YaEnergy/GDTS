@@ -86,7 +86,7 @@ namespace GD_Texture_Swapper
 
             ApplicationWindow.Icon = Icon.ExtractAssociatedIcon(@"Assets\logo.ico");
 
-            ApplyTextureButton.Click += (o, s) => ApplyTexturePack();
+            ApplyTextureButton.Click += (o, s) => ApplyTexturePackSetUp();
 
             Label TPLabel = new Label()
             {
@@ -300,63 +300,116 @@ namespace GD_Texture_Swapper
             }
         }
 
-        static void ApplyTexturePack()
+        static void ApplyTexturePackTask(object? o, DoWorkEventArgs s)
+        {
+            BackgroundWorker? sender = o as BackgroundWorker;
+            if (sender == null)
+                throw new Exception("No BackgroundWorker given!");
+
+            List<string> selectedTexturePacks = new();
+            for (int i = 0; i < TexturePackSelectedList.Items.Count; i++)
+            {
+                string? texturePackName = TexturePackSelectedList.Items[i].ToString();
+                if (texturePackName != null)
+                    selectedTexturePacks.Add(texturePackName);
+            }
+
+            //Texture swap
+            string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
+
+            for (int i = 0; i < defaultFileNames.Length; i++)
+            {
+                if (sender.CancellationPending)
+                {
+                    s.Cancel = true;
+                    return;
+                }
+
+                string defaultFileName = Path.GetFileName(defaultFileNames[i]);
+                if (defaultFileName.Contains(".dat"))
+                    continue;
+
+                int progressPercentage = (int)Math.Floor((i + 1f) / defaultFileNames.Length * 100f);
+                sender.ReportProgress(progressPercentage, $"Applying ({i + 1}/{defaultFileNames.Length}) {defaultFileName}");
+
+                string firstFoundTexturePath = "";
+                for (int j = 0; j < selectedTexturePacks.Count; j++)
+                {
+                    int index = selectedTexturePacks.Count - 1 - j;
+                    string texturePackName = selectedTexturePacks[index];
+                    if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"))
+                        continue;
+
+                    firstFoundTexturePath = TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}";
+                    break;
+                }
+
+                Exception? ex = TPFileManager.OverwriteFile(GDResourcePath + $@"\Resources\{defaultFileName}", firstFoundTexturePath);
+                if (ex != null)
+                    throw new Exception("No BackgroundWorker given!");
+            }
+
+        }
+        static void ApplyTexturePackSetUp()
         {
             ApplicationWindow.Controls.Add(ApplyTextureLabel);
             ApplyTextureButton.Text = "Applying...";
             ApplyTextureButton.Enabled = false;
             ApplyTextureButton.Update();
-            try
+            LoadingBarForm loadingbarform = new LoadingBarForm("Applying Texture Pack");
+            loadingbarform.Icon = ApplicationWindow.Icon;
+            loadingbarform.Show();
+
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += (o, s) => ApplyTexturePackTask(o, s);
+            worker.WorkerReportsProgress = true;
+            worker.WorkerSupportsCancellation = true;
+
+            worker.ProgressChanged += (o, s) =>
             {
-                List<string> selectedTexturePacks = new();
-                for (int i = 0; i < TexturePackSelectedList.Items.Count; i++)
+                loadingbarform.taskLabel.Text = s.UserState?.ToString();
+                loadingbarform.taskLabel.Update();
+                loadingbarform.progressBar.Value = s.ProgressPercentage;
+                loadingbarform.progressBar.Update();
+            };
+            worker.RunWorkerCompleted += (o, s) =>
+            {
+                BackgroundWorker? sender = o as BackgroundWorker;
+                if (sender == null)
                 {
-                    string? texturePackName = TexturePackSelectedList.Items[i].ToString();
-                    if(texturePackName != null)
-                        selectedTexturePacks.Add(texturePackName);
+                    Application.Exit();
+                    throw new Exception("No sender given!");
                 }
 
-                //Texture swap
-                string[] defaultFileNames = Directory.GetFiles(TexturePackFolderPath + @"\" + DefaultTexturePackName);
+                ApplyTextureButton.Text = "Apply Texture Pack";
+                ApplyTextureButton.Enabled = true;
+                ApplyTextureButton.Update();
+                ApplicationWindow.Controls.Remove(ApplyTextureLabel);
 
-                for (int i = 0; i < defaultFileNames.Length; i++)
+                loadingbarform.Close();
+                worker.Dispose();
+
+                if (s.Cancelled || s.Error != null)
                 {
-                    string defaultFileName = Path.GetFileName(defaultFileNames[i]);
-                    if (defaultFileName.Contains(".dat")) 
-                        continue;
+                    if (s.Error != null)
+                        MessageBox.Show($"Failed to apply texture pack. Reason: {s.Error.Message}", "Apply texture pack");
 
-                    ApplyTextureButton.Text = $"Applying ({i + 1}/{defaultFileNames.Length})";
-                    ApplyTextureButton.Update();
-                    ApplyTextureLabel.Text = defaultFileName;
-                    ApplyTextureLabel.Update();
-
-                    string firstFoundTexturePath = "";
-                    for (int j = 0; j < selectedTexturePacks.Count; j++)
+                    DialogResult applyDefaultTP = MessageBox.Show("Would you like to reapply the Default Texture Pack?", "Cancel Apply Texture Pack", MessageBoxButtons.YesNo);
+                    if (applyDefaultTP == DialogResult.Yes)
                     {
-                        int index = selectedTexturePacks.Count - 1 - j;
-                        string texturePackName = selectedTexturePacks[index];
-                        if (!File.Exists(TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}"))
-                            continue;
-
-                        firstFoundTexturePath = TexturePackFolderPath + $@"\{texturePackName}\{defaultFileName}";
-                        break;
+                        UpdateTexturePacks();
+                        ApplyTexturePackSetUp();
                     }
-
-                    Exception? ex = TPFileManager.OverwriteFile(GDResourcePath + $@"\Resources\{defaultFileName}", firstFoundTexturePath);
-                    if (ex != null)
-                        MessageBox.Show(ex.Message);
                 }
+                else
+                    MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
 
-                MessageBox.Show("Successfully applied texture pack!", "Apply texture pack");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to apply texture pack. Reason: {ex.Message}", "Apply texture pack");
-            }
-            ApplyTextureButton.Text = "Apply Texture Pack";
-            ApplyTextureButton.Enabled = true;
-            ApplyTextureButton.Update();
-            ApplicationWindow.Controls.Remove(ApplyTextureLabel);
+            };
+
+            loadingbarform.CancelLoad += () => worker.CancelAsync();
+
+            worker.RunWorkerAsync();
+             
             return;
         }
     }
