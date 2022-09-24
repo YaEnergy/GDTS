@@ -23,5 +23,14 @@ namespace GD_Texture_Swapper
         public event CancelLoadEvent? CancelLoad; 
 
         public void cancelButton_click(object sender, EventArgs e) => CancelLoad?.Invoke();
+
+        public void ProgressChangedLoad(object? o, ProgressChangedEventArgs s)
+        {
+            taskLabel.Text = s.UserState?.ToString();
+            taskLabel.Update();
+            progressBar.Value = s.ProgressPercentage;
+            progressBar.Update();
+            Focus();
+        }
     }
 }

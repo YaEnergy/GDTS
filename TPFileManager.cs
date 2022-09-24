@@ -39,7 +39,11 @@ namespace GD_Texture_Swapper
             {
                 FileStream fs = new(overwritingFilePath, FileMode.Open, FileAccess.ReadWrite);
 
-                FileStream resource_fs = new(filePathToOverwrite, FileMode.Open, FileAccess.ReadWrite);
+                FileStream resource_fs;
+                if(File.Exists(filePathToOverwrite))
+                    resource_fs = new(filePathToOverwrite, FileMode.Open, FileAccess.ReadWrite);
+                else
+                    resource_fs = File.Create(filePathToOverwrite);
 
                 fs.CopyTo(resource_fs);
 
