@@ -299,12 +299,14 @@ namespace GD_Texture_Swapper
             Point newPoint = new Point(s.X, s.Y);
             //newPoint = listBox.PointToClient(newPoint);
             int selectedIndex = listBox.IndexFromPoint(newPoint);
+            if (selectedIndex == -1)
+                return;
+
             string? item = listBox.Items[selectedIndex].ToString();
             if (item == null || item == DefaultTexturePackName)
                 return;
 
-            if (selectedIndex != -1)
-                listBox.Items.RemoveAt(selectedIndex);
+            listBox.Items.RemoveAt(selectedIndex);
         }
         static void UpdateTexturePacks()
         {
