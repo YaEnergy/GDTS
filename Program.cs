@@ -76,11 +76,6 @@ namespace GD_Texture_Swapper
                 return;
             }
 
-            if (!Directory.Exists(TexturePackFolderPath + @"\" + DefaultTexturePackName))
-                ResetDefaultTexturePackSetUp();
-
-
-
             ApplicationWindow.Text = "Geometry Dash Texture Swapper (v3)";
             ApplicationWindow.MaximizeBox = false;
             ApplicationWindow.Size = MainWindowSize;
@@ -142,7 +137,12 @@ namespace GD_Texture_Swapper
             ApplicationWindow.Controls.Add(TexturePackSelectionList);
             ApplicationWindow.Controls.Add(TexturePackSelectedList);
 
-            Application.Run(ApplicationWindow);
+            bool createDefaultTPSuccess = true;
+            if (!Directory.Exists(TexturePackFolderPath + @"\" + DefaultTexturePackName))
+                createDefaultTPSuccess = ResetDefaultTexturePackSetUp();
+
+            if (createDefaultTPSuccess)
+                Application.Run(ApplicationWindow);
         }
 
         private void ListBoxDragStart(object? sender, MouseEventArgs s)
@@ -202,10 +202,12 @@ namespace GD_Texture_Swapper
                 sender.ReportProgress((int)Math.Floor(sizeMBFinished / totalSizeMB * 100), $"Creating Default Texture Pack... ({Math.Floor(sizeMBFinished)}/{Math.Floor(totalSizeMB)} mb)");
             }
         }
-        static void ResetDefaultTexturePackSetUp()
+        static bool ResetDefaultTexturePackSetUp()
         {
             if (isResettingDefaultTP)
-                return;
+                return true;
+
+            isResettingDefaultTP = true;
 
             DirectoryInfo resourceFolder = new DirectoryInfo(GDResourcePath + $@"\Resources");
             long spaceReq = TPFileManager.GetDirectorySize(resourceFolder);
@@ -218,14 +220,19 @@ namespace GD_Texture_Swapper
             if (!hasSpace)
             {
                 MessageBox.Show($"Creating/Resetting the default texture pack requires {spaceReqMB} mb! You don't have enough space!");
-                return;
+                isResettingDefaultTP = false;
+                return false;
             }
 
             if (!Directory.Exists(tpPath))
             {
                 DialogResult result = MessageBox.Show($"Because no Default Texture Pack exists yet, we'll be creating one. If you have any texture packs already on, you might want to click cancel and set ur GD resource files to default textures! ({spaceReqMB} mb)", "Create Default Texture Pack", MessageBoxButtons.OKCancel);
                 if (result == DialogResult.Cancel || result == DialogResult.None)
-                    return;
+                {
+                    Application.Exit();
+                    isResettingDefaultTP = false;
+                    return false;
+                }
 
                 Directory.CreateDirectory(tpPath);
             }
@@ -233,7 +240,10 @@ namespace GD_Texture_Swapper
             {
                 DialogResult result = MessageBox.Show("Are you sure you want to reset the default texture pack? If you have any texture packs already on, you might want to click cancel and set ur GD resource files to default textures!", "Default Texture Pack", MessageBoxButtons.OKCancel);
                 if (result == DialogResult.Cancel || result == DialogResult.None)
-                    return;
+                {
+                    isResettingDefaultTP = false;
+                    return true;
+                }
             }
 
             LoadingBarForm loadingbarform = new LoadingBarForm("Default Texture Pack");
@@ -273,10 +283,9 @@ namespace GD_Texture_Swapper
 
             loadingbarform.cancelButton.Visible = false;
 
-            isResettingDefaultTP = true;
             worker.RunWorkerAsync();
             
-            return;
+            return true;
         }
         private void AddTexturePack(object? sender, DragEventArgs s)
         {
