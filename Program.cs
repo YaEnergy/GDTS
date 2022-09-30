@@ -34,9 +34,11 @@ namespace GD_Texture_Swapper
         };
         private static Button ApplyTextureButton = new Button()
         {
-            Text = "Apply Texture Pack",
+            Text = "Apply Texture Packs",
             Location = new Point(25, 165),
-            Size = new Size(240, 40)
+            Size = new Size(240, 40),
+            Image = Image.FromFile(@"Assets\B_ApplyIcon.png"),
+            ImageAlign = ContentAlignment.MiddleLeft
         };
         private static Label ApplyTextureLabel = new()
         {
@@ -85,7 +87,7 @@ namespace GD_Texture_Swapper
             ApplicationWindow.MaximumSize = MainWindowSize;
             ApplicationWindow.MinimumSize = MainWindowSize;
 
-            ApplicationWindow.Icon = Icon.ExtractAssociatedIcon(@"Assets\logo.ico");
+            ApplicationWindow.Icon = Icon.ExtractAssociatedIcon(@"Assets\L_logo.ico");
 
             ApplyTextureButton.Click += (o, s) => ApplyTexturePackSetUp();
 
@@ -107,15 +109,19 @@ namespace GD_Texture_Swapper
             {
                 Text = "Refresh Texture Packs",
                 Location = new Point(25, 210),
-                Size = new Size(240, 40)
+                Size = new Size(240, 40),
+                Image = Image.FromFile(@"Assets\B_RefreshIcon.png"),
+                ImageAlign = ContentAlignment.MiddleLeft
             };
             updateTexturePacksButton.Click += (o, s) => UpdateTexturePacks();
 
             Button resetDefaultTexturePackButton = new Button()
             {
-                Text = "RESET DEFAULT TEXTURE PACK",
+                Text = "RESET DEFAULT",
                 Location = new Point(300, 210),
-                Size = new Size(240, 40)
+                Size = new Size(240, 40),
+                Image = Image.FromFile(@"Assets\B_ResetIcon.png"),
+                ImageAlign = ContentAlignment.MiddleLeft
             };
             resetDefaultTexturePackButton.Click += (o, s) => ResetDefaultTexturePackSetUp();
 
@@ -231,7 +237,7 @@ namespace GD_Texture_Swapper
             }
 
             LoadingBarForm loadingbarform = new LoadingBarForm("Default Texture Pack");
-            loadingbarform.Icon = Icon.ExtractAssociatedIcon(@"Assets\logo.ico");
+            loadingbarform.Icon = Icon.ExtractAssociatedIcon(@"Assets\L_ResetIcon.ico");
             loadingbarform.Show();
 
             BackgroundWorker worker = new BackgroundWorker();
@@ -282,10 +288,15 @@ namespace GD_Texture_Swapper
             newPoint = listBox.PointToClient(newPoint);
             int selectedIndex = listBox.IndexFromPoint(newPoint);
             object item = TexturePackSelectionList.Items[TexturePackSelectionList.IndexFromPoint(mousePointPos)];
+
             if (selectedIndex == -1)
                 listBox.Items.Add(item);
             else
                 listBox.Items.Insert(selectedIndex, item);
+
+            ApplyTextureButton.Text = "Apply Texture Packs";
+            ApplyTextureButton.Enabled = true;
+            ApplyTextureButton.Update();
         }
         private void RemoveTexturePack(object? sender, MouseEventArgs s)
         {
@@ -307,6 +318,10 @@ namespace GD_Texture_Swapper
                 return;
 
             listBox.Items.RemoveAt(selectedIndex);
+
+            ApplyTextureButton.Text = "Apply Texture Packs";
+            ApplyTextureButton.Enabled = true;
+            ApplyTextureButton.Update();
         }
         static void UpdateTexturePacks()
         {
@@ -323,6 +338,10 @@ namespace GD_Texture_Swapper
             }
 
             TexturePackSelectedList.Items.Add(DefaultTexturePackName);
+
+            ApplyTextureButton.Text = "Apply Texture Packs";
+            ApplyTextureButton.Enabled = true;
+            ApplyTextureButton.Update();
         }
 
         static void ApplyTexturePackTask(object? o, DoWorkEventArgs s)
@@ -385,7 +404,7 @@ namespace GD_Texture_Swapper
             ApplyTextureButton.Enabled = false;
             ApplyTextureButton.Update();
             LoadingBarForm loadingbarform = new LoadingBarForm("Applying Texture Pack");
-            loadingbarform.Icon = ApplicationWindow.Icon;
+            loadingbarform.Icon = Icon.ExtractAssociatedIcon(@"Assets\L_ApplyIcon.ico");
             loadingbarform.Show();
 
             BackgroundWorker worker = new BackgroundWorker();
@@ -404,8 +423,8 @@ namespace GD_Texture_Swapper
                     throw new Exception("No sender given!");
                 }
 
-                ApplyTextureButton.Text = "Apply Texture Pack";
-                ApplyTextureButton.Enabled = true;
+                ApplyTextureButton.Text = "(No changes made)";
+                ApplyTextureButton.Enabled = false;
                 ApplyTextureButton.Update();
                 ApplicationWindow.Controls.Remove(ApplyTextureLabel);
 

@@ -10,8 +10,41 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\B_ApplyIcon.png" />
+    <None Remove="Assets\B_RefreshIcon.png" />
+    <None Remove="Assets\B_ResetIcon.png" />
+    <None Remove="Assets\L_ApplyIcon.ico" />
+    <None Remove="Assets\L_logo.ico" />
+    <None Remove="Assets\L_logo_old.ico" />
+    <None Remove="Assets\L_ResetIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\L_ApplyIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\B_ApplyIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\B_RefreshIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\L_logo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\L_ResetIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\B_ResetIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\L_logo_old.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="TexturePacks\" />
-	<Folder Include="Assets\" />
   </ItemGroup>
 
 </Project>
