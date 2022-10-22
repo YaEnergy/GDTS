@@ -120,6 +120,17 @@ namespace GD_Texture_Swapper
             };
             resetDefaultTexturePackButton.Click += (o, s) => ResetDefaultTexturePackSetUp();
 
+            Button openTexturePacksFolderButton = new Button()
+            {
+                Text = "Open Texture Packs Folder",
+                Location = new Point(300, 165),
+                Size = new Size(240, 40),
+            };
+            openTexturePacksFolderButton.Click += (o, s) =>
+            {
+                Process.Start("explorer.exe", TexturePackFolderPath);
+            };
+
             UpdateTexturePacks();
 
             TexturePackSelectionList.MouseDown += (o, s) => ListBoxDragStart(o, s);
@@ -134,6 +145,7 @@ namespace GD_Texture_Swapper
             ApplicationWindow.Controls.Add(selectedTPsLabel);
             ApplicationWindow.Controls.Add(updateTexturePacksButton);
             ApplicationWindow.Controls.Add(resetDefaultTexturePackButton);
+            ApplicationWindow.Controls.Add(openTexturePacksFolderButton);
             ApplicationWindow.Controls.Add(TexturePackSelectionList);
             ApplicationWindow.Controls.Add(TexturePackSelectedList);
 

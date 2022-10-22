@@ -27,4 +27,3 @@ The RESET DEFAULT button will overwrite all files in the Default Texture with al
 </details>
   
  If you find any errors, please make an issue, so we can fix the problems together! :)
-
